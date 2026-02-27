@@ -54,6 +54,41 @@ func TestLogsJSON(t *testing.T) {
 	}
 }
 
+func TestLogsRealStreamJSON(t *testing.T) {
+	dir := t.TempDir()
+	stateDir = dir
+	logsJSON = false // reset from prior test (cobra reuses globals)
+	logsFollow = false
+	state.Write(dir, &state.Worker{ID: "1103", Status: state.StatusDone, Directory: "/tmp", Task: "test"})
+
+	// Real stream-json format: content nested under .message.content[]
+	logPath := filepath.Join(dir, "1103.log")
+	lines := `{"type":"assistant","message":{"content":[{"type":"text","text":"Hello from real stream-json."}]},"session_id":"abc"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Second message."},{"type":"tool_use","name":"Bash","id":"x"}]},"session_id":"abc"}
+{"type":"result","subtype":"success"}
+`
+	os.WriteFile(logPath, []byte(lines), 0644)
+
+	rootCmd.SetArgs([]string{"logs", "1103"})
+	buf := new(strings.Builder)
+	rootCmd.SetOut(buf)
+	rootCmd.Execute()
+
+	output := buf.String()
+	if !strings.Contains(output, "Hello from real stream-json.") {
+		t.Errorf("expected real stream-json text, got: %s", output)
+	}
+	if !strings.Contains(output, "Second message.") {
+		t.Errorf("expected second message, got: %s", output)
+	}
+	if !strings.Contains(output, "[tool: Bash]") {
+		t.Errorf("expected inline tool_use from content block, got: %s", output)
+	}
+	if !strings.Contains(output, "[result: success]") {
+		t.Errorf("expected result line, got: %s", output)
+	}
+}
+
 func TestLogsNoFile(t *testing.T) {
 	dir := t.TempDir()
 	stateDir = dir
