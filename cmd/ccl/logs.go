@@ -72,27 +72,46 @@ func renderLine(out io.Writer, line []byte) {
 	typ, _ := event["type"].(string)
 	switch typ {
 	case "assistant":
+		// Real stream-json nests content under .message.content[]
+		// Test/simple format may have .content directly
 		content := event["content"]
-		switch c := content.(type) {
-		case string:
-			if c != "" {
-				fmt.Fprintf(out, "%s\n", c)
-			}
-		case []interface{}:
-			for _, item := range c {
-				if m, ok := item.(map[string]interface{}); ok {
-					if text, ok := m["text"].(string); ok {
-						fmt.Fprintf(out, "%s\n", text)
-					}
-				}
-			}
+		if msg, ok := event["message"].(map[string]interface{}); ok {
+			content = msg["content"]
 		}
+		renderContent(out, content)
 	case "tool_use":
 		name, _ := event["name"].(string)
 		fmt.Fprintf(out, "[tool: %s]\n", name)
 	case "result":
 		sub, _ := event["subtype"].(string)
 		fmt.Fprintf(out, "[result: %s]\n", sub)
+	}
+}
+
+func renderContent(out io.Writer, content interface{}) {
+	switch c := content.(type) {
+	case string:
+		if c != "" {
+			fmt.Fprintf(out, "%s\n", c)
+		}
+	case []interface{}:
+		for _, item := range c {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			itemType, _ := m["type"].(string)
+			switch itemType {
+			case "text":
+				if text, ok := m["text"].(string); ok && text != "" {
+					fmt.Fprintf(out, "%s\n", text)
+				}
+			case "tool_use":
+				if name, ok := m["name"].(string); ok {
+					fmt.Fprintf(out, "[tool: %s]\n", name)
+				}
+			}
+		}
 	}
 }
 
