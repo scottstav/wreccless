@@ -1,0 +1,26 @@
+# ~/.config/ccl/config.toml
+
+[claude]
+# Hardcoded internally: --output-format stream-json --verbose --session-id <uuid>
+# These cannot be changed — ccl depends on them.
+
+# Pass --dangerously-skip-permissions to claude (default: true)
+skip_permissions = true
+
+# System prompt appended for autonomous workers
+system_prompt = """You are the user's trusted programmer. Do not ask questions. \
+Complete the entire task before stopping. If you encounter issues, debug and fix them. \
+When finished, end with a 1-2 sentence summary."""
+
+# Additional flags to pass to claude -p (e.g. ["--model", "opus"])
+extra_flags = []
+
+[hooks]
+# Shell commands executed on state transitions via sh -c
+# Template variables: {{.ID}}, {{.Task}}, {{.Dir}}, {{.Status}}, {{.SessionID}}
+# Hooks fire asynchronously and don't block state transitions.
+# on_start = ["pkill -SIGRTMIN+12 waybar"]
+# on_done = ["pkill -SIGRTMIN+12 waybar", "notify-send 'Worker Done' '{{.Task}}'"]
+# on_pending = ["pkill -SIGRTMIN+12 waybar"]
+# on_error = ["notify-send -u critical 'Worker Failed' '{{.Task}}'"]
+# on_kill = ["pkill -SIGRTMIN+12 waybar"]
