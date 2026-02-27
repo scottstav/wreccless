@@ -3,7 +3,6 @@ package worker
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 )
 
@@ -17,21 +16,10 @@ func SpawnRun(id, cclBin, configPath, stateDir string) error {
 	cmd.Stdin = nil
 	cmd.Stdout = nil
 	cmd.Stderr = nil
-	cmd.Env = append(cleanEnv(),
+	cmd.Env = append(os.Environ(),
 		"CCL_STATE_DIR="+stateDir,
 		"CCL_CONFIG="+configPath,
 	)
 	return cmd.Start()
 }
 
-// cleanEnv returns os.Environ() with CLAUDECODE removed.
-// Claude Code sets this var to detect nested sessions — workers must not inherit it.
-func cleanEnv() []string {
-	var env []string
-	for _, e := range os.Environ() {
-		if !strings.HasPrefix(e, "CLAUDECODE=") {
-			env = append(env, e)
-		}
-	}
-	return env
-}

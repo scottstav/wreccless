@@ -63,7 +63,6 @@ func Run(stateDir, id string, cfg *config.Config, claudeBin string) error {
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.Stdin = nil
-	cmd.Env = cleanEnv()
 
 	// Forward SIGTERM to child
 	sigCh := make(chan os.Signal, 1)
