@@ -3,8 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	stateDir   = filepath.Join(os.Getenv("HOME"), ".local", "state", "ccl")
+	configPath = filepath.Join(os.Getenv("HOME"), ".config", "ccl", "config.toml")
 )
 
 var rootCmd = &cobra.Command{
