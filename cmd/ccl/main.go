@@ -18,6 +18,15 @@ var rootCmd = &cobra.Command{
 	Short: "Claude Code Launcher — manage background Claude workers",
 }
 
+func init() {
+	if v := os.Getenv("CCL_STATE_DIR"); v != "" {
+		stateDir = v
+	}
+	if v := os.Getenv("CCL_CONFIG"); v != "" {
+		configPath = v
+	}
+}
+
 func main() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/scottstav/wreccless/internal/config"
 	"github.com/scottstav/wreccless/internal/hooks"
 	"github.com/scottstav/wreccless/internal/state"
+	"github.com/scottstav/wreccless/internal/worker"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +46,11 @@ func runApprove(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// TODO: Task 11 — spawn detached ccl run here
+	cclBin, _ := os.Executable()
+	if err := worker.SpawnRun(id, cclBin, configPath, stateDir); err != nil {
+		return fmt.Errorf("spawn worker: %w", err)
+	}
+
 	vars := hooks.Vars{ID: id, Task: w.Task, Dir: w.Directory, Status: string(w.Status)}
 	hooks.Fire(cfg.Hooks.OnStart, vars)
 

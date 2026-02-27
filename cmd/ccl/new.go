@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/scottstav/wreccless/internal/config"
 	"github.com/scottstav/wreccless/internal/hooks"
 	"github.com/scottstav/wreccless/internal/state"
+	"github.com/scottstav/wreccless/internal/worker"
 	"github.com/spf13/cobra"
 )
 
@@ -73,8 +75,12 @@ func runNew(cmd *cobra.Command, args []string) error {
 		startedAt := time.Now()
 		w.StartedAt = &startedAt
 		state.Write(stateDir, w)
+
+		cclBin, _ := os.Executable()
+		if err := worker.SpawnRun(id, cclBin, configPath, stateDir); err != nil {
+			return fmt.Errorf("spawn worker: %w", err)
+		}
 		hooks.Fire(cfg.Hooks.OnStart, vars)
-		// TODO: Task 11 — spawn detached ccl run here
 	}
 
 	if newJSON {
