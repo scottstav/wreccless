@@ -7,7 +7,7 @@ Fire-and-forget Claude Code workers from the command line.
 ## Install
 
 ```sh
-make install   # builds and copies to ~/.local/bin/ccl
+go install github.com/scottstav/wreccless/cmd/ccl@latest
 ```
 
 ## Usage
