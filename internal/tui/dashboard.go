@@ -161,12 +161,53 @@ func (d dashboard) View() string {
 	b.WriteString(title)
 	b.WriteString("\n\n")
 
+	// Calculate fixed overhead lines:
+	//   title(1) + blank(1) + blank_before_log(1) + log_title(1) +
+	//   log_border_top(1) + log_border_bottom(1) + help(1) = 7
+	// When flash is visible, it reuses the blank_before_log line
+	// (becomes blank_before_flash) and adds just the flash text line.
+	fixedLines := 7
+	if d.flash != "" {
+		fixedLines += 1 // flash text line
+	}
+
+	// Budget for table + log content (excluding borders)
+	available := d.height - fixedLines
+	if available < 4 {
+		available = 4
+	}
+
+	// Table gets up to 40% of screen, but never more rows than we have
+	maxTableRows := d.height * 4 / 10
+	if len(d.workers) == 0 {
+		// "No workers" placeholder is 1 line
+		maxTableRows = 1
+	} else {
+		// header + worker rows
+		actualTable := len(d.workers) + 1
+		if actualTable < maxTableRows {
+			maxTableRows = actualTable
+		}
+	}
+
+	// Log content gets the rest (minimum 1 line)
+	logHeight := available - maxTableRows
+	if logHeight < 1 {
+		logHeight = 1
+		// Shrink table to fit
+		maxTableRows = available - logHeight
+		if maxTableRows < 2 {
+			maxTableRows = 2
+		}
+	}
+
 	// Worker table
 	if len(d.workers) == 0 {
 		b.WriteString(mutedStyle.Render("  No workers. Press [n] to create one."))
 		b.WriteString("\n")
 	} else {
-		b.WriteString(d.renderTable())
+		// maxTableRows includes the header, so visible worker rows = maxTableRows - 1
+		b.WriteString(d.renderTable(maxTableRows - 1))
 	}
 
 	// Flash message
@@ -177,16 +218,9 @@ func (d dashboard) View() string {
 		} else {
 			b.WriteString(flashStyle.Render(d.flash))
 		}
-		b.WriteString("\n")
 	}
 
 	// Log preview pane
-	tableHeight := min(len(d.workers)+2, d.height*4/10)
-	logHeight := d.height - tableHeight - 6
-	if logHeight < 3 {
-		logHeight = 3
-	}
-
 	logTitle := "LOGS"
 	if w := d.selectedWorker(); w != nil {
 		logTitle = fmt.Sprintf("LOGS (%s)", w.ID)
@@ -209,7 +243,7 @@ func (d dashboard) View() string {
 	return b.String()
 }
 
-func (d dashboard) renderTable() string {
+func (d dashboard) renderTable(maxRows int) string {
 	var b strings.Builder
 	home, _ := os.UserHomeDir()
 
@@ -218,7 +252,24 @@ func (d dashboard) renderTable() string {
 	b.WriteString(headerStyle.Render(header))
 	b.WriteString("\n")
 
-	for i, w := range d.workers {
+	// Determine visible window of workers around the cursor
+	start := 0
+	end := len(d.workers)
+	if maxRows > 0 && len(d.workers) > maxRows {
+		// Keep cursor visible within the window
+		start = d.cursor - maxRows/2
+		if start < 0 {
+			start = 0
+		}
+		end = start + maxRows
+		if end > len(d.workers) {
+			end = len(d.workers)
+			start = end - maxRows
+		}
+	}
+
+	for i := start; i < end; i++ {
+		w := d.workers[i]
 		dir := w.Directory
 		if home != "" {
 			dir = strings.Replace(dir, home, "~", 1)
