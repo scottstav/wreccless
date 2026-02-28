@@ -1,4 +1,4 @@
-# wre(**CCL**)ess Claude Code Launcher
+# wre(**CCL**)ess
 
 Fire-and-forget Claude Code workers from the command line.
 
