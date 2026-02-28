@@ -16,7 +16,7 @@ go install github.com/scottstav/wreccless/cmd/ccl@latest
 # Launch a worker (starts immediately in background)
 ccl new --dir ~/projects/myapp --task "Add rate limiting to the API"
 
-# Launch as pending (requires manual approval)
+# Launch as pending (requires manual approval — useful for spawning jobs from LLMs via tools)
 ccl new --dir ~/projects/myapp --task "Refactor auth" --pending
 
 # See what's running
