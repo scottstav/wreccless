@@ -156,59 +156,28 @@ func (d dashboard) View() string {
 
 	var b strings.Builder
 
-	// Title bar
+	// Title bar (1 line + 1 blank = 2 lines)
 	title := titleStyle.Render("wreccless")
 	b.WriteString(title)
 	b.WriteString("\n\n")
 
-	// Calculate fixed overhead lines:
-	//   title(1) + blank(1) + blank_before_log(1) + log_title(1) +
-	//   log_border_top(1) + log_border_bottom(1) + help(1) = 7
-	// When flash is visible, it reuses the blank_before_log line
-	// (becomes blank_before_flash) and adds just the flash text line.
-	fixedLines := 7
-	if d.flash != "" {
-		fixedLines += 1 // flash text line
-	}
-
-	// Budget for table + log content (excluding borders)
-	available := d.height - fixedLines
-	if available < 4 {
-		available = 4
-	}
-
-	// Table gets up to 40% of screen, but never more rows than we have
-	maxTableRows := d.height * 4 / 10
+	// Worker table — always rendered first, gets exactly the space it needs.
+	tableStr := ""
 	if len(d.workers) == 0 {
-		// "No workers" placeholder is 1 line
-		maxTableRows = 1
+		tableStr = mutedStyle.Render("  No workers. Press [n] to create one.") + "\n"
 	} else {
-		// header + worker rows
-		actualTable := len(d.workers) + 1
-		if actualTable < maxTableRows {
-			maxTableRows = actualTable
+		// Cap visible rows to 1/3 of screen so many workers don't starve the log.
+		maxRows := len(d.workers)
+		cap := d.height / 3
+		if cap < 3 {
+			cap = 3
 		}
-	}
-
-	// Log content gets the rest (minimum 1 line)
-	logHeight := available - maxTableRows
-	if logHeight < 1 {
-		logHeight = 1
-		// Shrink table to fit
-		maxTableRows = available - logHeight
-		if maxTableRows < 2 {
-			maxTableRows = 2
+		if maxRows > cap {
+			maxRows = cap
 		}
+		tableStr = d.renderTable(maxRows)
 	}
-
-	// Worker table
-	if len(d.workers) == 0 {
-		b.WriteString(mutedStyle.Render("  No workers. Press [n] to create one."))
-		b.WriteString("\n")
-	} else {
-		// maxTableRows includes the header, so visible worker rows = maxTableRows - 1
-		b.WriteString(d.renderTable(maxTableRows - 1))
-	}
+	b.WriteString(tableStr)
 
 	// Flash message
 	if d.flash != "" {
@@ -220,6 +189,17 @@ func (d dashboard) View() string {
 		}
 	}
 
+	// Count lines consumed so far to give the log the strict remainder.
+	topLines := strings.Count(b.String(), "\n")
+
+	// Remaining layout: \n(1) + log_title(1) + \n(1) + log_border_top(1) +
+	//   log_content + log_border_bottom(1) + \n(1) + help(1) = 6 + logHeight
+	const logOverhead = 6
+	logHeight := d.height - topLines - logOverhead
+	if logHeight < 1 {
+		logHeight = 1
+	}
+
 	// Log preview pane
 	logTitle := "LOGS"
 	if w := d.selectedWorker(); w != nil {
@@ -229,6 +209,7 @@ func (d dashboard) View() string {
 	logBox := logBorderStyle.
 		Width(d.width - 4).
 		Height(logHeight).
+		MaxHeight(logHeight + 2). // hard-clip: content + top/bottom border
 		Render(d.truncateLog(logHeight))
 
 	b.WriteString("\n")
@@ -240,7 +221,16 @@ func (d dashboard) View() string {
 	b.WriteString("\n")
 	b.WriteString(d.renderHelp())
 
-	return b.String()
+	// Safety net: hard-truncate to terminal height so the table can never
+	// be pushed off-screen by unexpectedly tall content.
+	result := b.String()
+	lines := strings.Split(result, "\n")
+	if len(lines) > d.height {
+		lines = lines[:d.height]
+		result = strings.Join(lines, "\n")
+	}
+
+	return result
 }
 
 func (d dashboard) renderTable(maxRows int) string {
