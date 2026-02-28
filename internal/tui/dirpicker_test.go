@@ -3,6 +3,8 @@ package tui
 import (
 	"path/filepath"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestLoadHistoryMissingFile(t *testing.T) {
@@ -82,5 +84,91 @@ func TestDirPickerCandidatesMaxFive(t *testing.T) {
 	dp.refreshCandidates()
 	if len(dp.candidates) > 5 {
 		t.Errorf("expected max 5 candidates, got %d", len(dp.candidates))
+	}
+}
+
+func TestDirPickerDownOpensDropdown(t *testing.T) {
+	dp := newDirPicker("", []string{"~/projects/foo"})
+	dp.input.Focus()
+	dp.refreshCandidates()
+
+	if dp.open {
+		t.Error("dropdown should start closed")
+	}
+
+	dp, _ = dp.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if !dp.open {
+		t.Error("down arrow should open dropdown")
+	}
+	if dp.cursor != 0 {
+		t.Errorf("expected cursor at 0, got %d", dp.cursor)
+	}
+}
+
+func TestDirPickerCursorWraps(t *testing.T) {
+	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = len(dp.candidates) - 1
+
+	dp, _ = dp.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if dp.cursor != 0 {
+		t.Errorf("expected cursor to wrap to 0, got %d", dp.cursor)
+	}
+}
+
+func TestDirPickerUpFromTop(t *testing.T) {
+	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = 0
+
+	dp, _ = dp.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if dp.cursor != len(dp.candidates)-1 {
+		t.Errorf("expected cursor to wrap to %d, got %d", len(dp.candidates)-1, dp.cursor)
+	}
+}
+
+func TestDirPickerEscClosesDropdown(t *testing.T) {
+	dp := newDirPicker("", []string{"~/a"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+
+	dp, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if dp.open {
+		t.Error("esc should close dropdown")
+	}
+	if cmd != nil {
+		t.Error("esc with open dropdown should not produce a command")
+	}
+}
+
+func TestDirPickerEscCancelWhenClosed(t *testing.T) {
+	dp := newDirPicker("", nil)
+	dp.input.Focus()
+
+	_, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if cmd == nil {
+		t.Error("esc with closed dropdown should produce cancel command")
+	}
+}
+
+func TestDirPickerTypingResetsCursor(t *testing.T) {
+	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = 1
+
+	dp, _ = dp.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	if dp.cursor != -1 {
+		t.Errorf("typing should reset cursor to -1, got %d", dp.cursor)
 	}
 }

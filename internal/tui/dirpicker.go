@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 const maxHistory = 50
@@ -150,4 +151,87 @@ func (d *dirPicker) refreshCandidates() {
 	}
 
 	d.candidates = candidates
+}
+
+func (d dirPicker) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func (d dirPicker) Update(msg tea.Msg) (dirPicker, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		return d.handleKey(msg)
+	}
+
+	var cmd tea.Cmd
+	d.input, cmd = d.input.Update(msg)
+	return d, cmd
+}
+
+func (d dirPicker) handleKey(msg tea.KeyMsg) (dirPicker, tea.Cmd) {
+	switch msg.Type {
+	case tea.KeyDown, tea.KeyCtrlN:
+		if len(d.candidates) == 0 {
+			d.refreshCandidates()
+		}
+		if len(d.candidates) > 0 {
+			d.open = true
+			d.cursor++
+			if d.cursor >= len(d.candidates) {
+				d.cursor = 0
+			}
+		}
+		return d, nil
+
+	case tea.KeyUp, tea.KeyCtrlP:
+		if d.open && len(d.candidates) > 0 {
+			d.cursor--
+			if d.cursor < 0 {
+				d.cursor = len(d.candidates) - 1
+			}
+		}
+		return d, nil
+
+	case tea.KeyEsc:
+		if d.open {
+			d.open = false
+			d.cursor = -1
+			return d, nil
+		}
+		return d, func() tea.Msg { return dirPickerCancelMsg{} }
+
+	case tea.KeyTab:
+		if d.open && d.cursor >= 0 && d.cursor < len(d.candidates) {
+			selected := d.candidates[d.cursor]
+			if !strings.HasSuffix(selected, "/") {
+				selected += "/"
+			}
+			d.input.SetValue(selected)
+			d.input.SetCursor(len(selected))
+			d.cursor = -1
+			d.refreshCandidates()
+			return d, nil
+		}
+		return d, func() tea.Msg { return dirPickerNextFieldMsg{} }
+
+	case tea.KeyEnter:
+		if d.open && d.cursor >= 0 && d.cursor < len(d.candidates) {
+			d.input.SetValue(d.candidates[d.cursor])
+		}
+		d.open = false
+		d.cursor = -1
+		return d, func() tea.Msg { return dirPickerNextFieldMsg{} }
+	}
+
+	prevVal := d.input.Value()
+	var cmd tea.Cmd
+	d.input, cmd = d.input.Update(msg)
+
+	if d.input.Value() != prevVal {
+		d.cursor = -1
+		d.open = true
+		d.refreshCandidates()
+	}
+
+	return d, cmd
 }
