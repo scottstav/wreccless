@@ -125,6 +125,10 @@ func (f form) handleKey(msg tea.KeyMsg) (form, tea.Cmd) {
 			f.pending = !f.pending
 			return f, nil
 		}
+
+	case msg.Type == tea.KeyEnter && f.focusIndex == 3:
+		f.pending = !f.pending
+		return f, nil
 	}
 
 	// Delegate to focused component
