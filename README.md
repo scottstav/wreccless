@@ -33,6 +33,10 @@ ccl ui                              # TUI
 
 `--json` output on `list` and `status` makes it easy to wire into waybar, polybar, etc.
 
+Use the CLI to build custom scripts that fit your workflow.
+
+![CLI scripting](docs/gifs/cli-scripting.gif)
+
 ## Config
 
 `~/.config/ccl/config.toml` — sane defaults, everything's optional.
