@@ -2,6 +2,7 @@ package tui
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -170,5 +171,32 @@ func TestDirPickerTypingResetsCursor(t *testing.T) {
 	dp, _ = dp.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	if dp.cursor != -1 {
 		t.Errorf("typing should reset cursor to -1, got %d", dp.cursor)
+	}
+}
+
+func TestDirPickerViewShowsCandidates(t *testing.T) {
+	dp := newDirPicker("", []string{"~/projects/foo", "~/projects/bar"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = 0
+
+	view := dp.CandidatesView()
+	if !strings.Contains(view, "projects/foo") {
+		t.Error("expected candidates view to contain highlighted candidate")
+	}
+}
+
+func TestDirPickerViewHiddenWhenClosed(t *testing.T) {
+	dp := newDirPicker("", []string{"~/projects/foo"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = false
+
+	view := dp.CandidatesView()
+	if strings.Contains(view, "projects/foo") {
+		t.Error("candidates should not appear when dropdown is closed")
 	}
 }

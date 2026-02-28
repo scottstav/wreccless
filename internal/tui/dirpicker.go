@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const maxHistory = 50
@@ -234,4 +235,24 @@ func (d dirPicker) handleKey(msg tea.KeyMsg) (dirPicker, tea.Cmd) {
 	}
 
 	return d, cmd
+}
+
+func (d dirPicker) View() string {
+	return d.input.View()
+}
+
+func (d dirPicker) CandidatesView() string {
+	if !d.open || len(d.candidates) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	for i, c := range d.candidates {
+		if i == d.cursor {
+			b.WriteString("    " + lipgloss.NewStyle().Foreground(colorPrimary).Bold(true).Render("> "+c) + "\n")
+		} else {
+			b.WriteString("    " + mutedStyle.Render("  "+c) + "\n")
+		}
+	}
+	return b.String()
 }
