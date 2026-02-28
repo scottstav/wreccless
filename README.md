@@ -19,7 +19,7 @@ go install github.com/scottstav/wreccless/cmd/ccl@latest
 
 ```sh
 ccl new --dir ~/myapp --task "Add rate limiting"   # launch a worker
-ccl new ... --pending                               # require approval first
+ccl new ... --pending                               # require approval (useful for LLM tool integrations)
 ccl list                            # list workers (--json, --status <s>)
 ccl status <id>                     # detailed info (--json)
 ccl approve <id>                    # start a pending worker
