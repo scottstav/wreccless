@@ -49,7 +49,7 @@ func TestSaveHistoryCapsAt50(t *testing.T) {
 }
 
 func TestNewDirPicker(t *testing.T) {
-	dp := newDirPicker("", nil)
+	dp := newDirPicker(nil)
 	if dp.Value() != "~/" {
 		t.Errorf("expected initial value '~/', got %q", dp.Value())
 	}
@@ -63,7 +63,7 @@ func TestNewDirPicker(t *testing.T) {
 
 func TestDirPickerCandidatesWithHistory(t *testing.T) {
 	history := []string{"~/projects/foo", "~/projects/bar", "~/documents"}
-	dp := newDirPicker("", history)
+	dp := newDirPicker(history)
 	dp.input.SetValue("~/pro")
 	dp.refreshCandidates()
 
@@ -80,7 +80,7 @@ func TestDirPickerCandidatesWithHistory(t *testing.T) {
 }
 
 func TestDirPickerCandidatesMaxFive(t *testing.T) {
-	dp := newDirPicker("", nil)
+	dp := newDirPicker(nil)
 	dp.input.SetValue("/") // root has many dirs
 	dp.refreshCandidates()
 	if len(dp.candidates) > 5 {
@@ -89,7 +89,7 @@ func TestDirPickerCandidatesMaxFive(t *testing.T) {
 }
 
 func TestDirPickerDownOpensDropdown(t *testing.T) {
-	dp := newDirPicker("", []string{"~/projects/foo"})
+	dp := newDirPicker([]string{"~/projects/foo"})
 	dp.input.Focus()
 	dp.refreshCandidates()
 
@@ -107,7 +107,7 @@ func TestDirPickerDownOpensDropdown(t *testing.T) {
 }
 
 func TestDirPickerCursorWraps(t *testing.T) {
-	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp := newDirPicker([]string{"~/a", "~/b"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()
@@ -121,7 +121,7 @@ func TestDirPickerCursorWraps(t *testing.T) {
 }
 
 func TestDirPickerUpFromTop(t *testing.T) {
-	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp := newDirPicker([]string{"~/a", "~/b"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()
@@ -135,7 +135,7 @@ func TestDirPickerUpFromTop(t *testing.T) {
 }
 
 func TestDirPickerEscClosesDropdown(t *testing.T) {
-	dp := newDirPicker("", []string{"~/a"})
+	dp := newDirPicker([]string{"~/a"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()
@@ -151,7 +151,7 @@ func TestDirPickerEscClosesDropdown(t *testing.T) {
 }
 
 func TestDirPickerEscCancelWhenClosed(t *testing.T) {
-	dp := newDirPicker("", nil)
+	dp := newDirPicker(nil)
 	dp.input.Focus()
 
 	_, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyEsc})
@@ -161,7 +161,7 @@ func TestDirPickerEscCancelWhenClosed(t *testing.T) {
 }
 
 func TestDirPickerTypingResetsCursor(t *testing.T) {
-	dp := newDirPicker("", []string{"~/a", "~/b"})
+	dp := newDirPicker([]string{"~/a", "~/b"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()
@@ -174,8 +174,56 @@ func TestDirPickerTypingResetsCursor(t *testing.T) {
 	}
 }
 
+func TestDirPickerTabDrillsIntoDir(t *testing.T) {
+	dp := newDirPicker([]string{"~/projects", "~/documents"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = 0 // ~/projects selected
+
+	dp, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyTab})
+	// Should drill into ~/projects/ (not advance field)
+	if cmd != nil {
+		t.Error("tab with selection should drill, not produce a command")
+	}
+	if dp.Value() != "~/projects/" {
+		t.Errorf("expected value '~/projects/', got %q", dp.Value())
+	}
+}
+
+func TestDirPickerTabNoSelectionAdvances(t *testing.T) {
+	dp := newDirPicker(nil)
+	dp.input.Focus()
+
+	_, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cmd == nil {
+		t.Error("tab with no selection should produce dirPickerNextFieldMsg")
+	}
+}
+
+func TestDirPickerEnterAccepts(t *testing.T) {
+	dp := newDirPicker([]string{"~/projects", "~/documents"})
+	dp.input.Focus()
+	dp.input.SetValue("~/")
+	dp.refreshCandidates()
+	dp.open = true
+	dp.cursor = 1 // ~/documents selected
+
+	dp, cmd := dp.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Error("enter should produce dirPickerNextFieldMsg")
+	}
+	if dp.Value() != "~/documents" {
+		t.Errorf("expected value '~/documents', got %q", dp.Value())
+	}
+	if dp.open {
+		t.Error("enter should close dropdown")
+	}
+}
+
 func TestDirPickerViewShowsCandidates(t *testing.T) {
-	dp := newDirPicker("", []string{"~/projects/foo", "~/projects/bar"})
+	dp := newDirPicker([]string{"~/projects/foo", "~/projects/bar"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()
@@ -189,7 +237,7 @@ func TestDirPickerViewShowsCandidates(t *testing.T) {
 }
 
 func TestDirPickerViewHiddenWhenClosed(t *testing.T) {
-	dp := newDirPicker("", []string{"~/projects/foo"})
+	dp := newDirPicker([]string{"~/projects/foo"})
 	dp.input.Focus()
 	dp.input.SetValue("~/")
 	dp.refreshCandidates()

@@ -59,6 +59,10 @@ func NewApp(stateDir, configPath string) App {
 	}
 }
 
+func (a App) dirHistoryPath() string {
+	return filepath.Join(a.stateDir, "dir-history.json")
+}
+
 func (a App) Init() tea.Cmd {
 	return tea.Batch(
 		a.dashboard.Init(),
@@ -156,9 +160,8 @@ func (a App) updateDashboard(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return a, nil
 			}
 		case key.Matches(msg, dashboardKeys.New):
-			historyPath := filepath.Join(a.stateDir, "dir-history.json")
-			history := loadDirHistory(historyPath)
-			a.form = newForm(a.width, a.height, historyPath, history)
+			history := loadDirHistory(a.dirHistoryPath())
+			a.form = newForm(a.width, a.height, history)
 			a.view = viewForm
 			return a, a.form.Init()
 
@@ -254,8 +257,7 @@ func (a *App) handleCreate(msg createMsg) tea.Cmd {
 	}
 
 	// Save directory to history
-	historyPath := filepath.Join(a.stateDir, "dir-history.json")
-	dirHistory := loadDirHistory(historyPath)
+	dirHistory := loadDirHistory(a.dirHistoryPath())
 	histDir := msg.dir
 	home, _ := os.UserHomeDir()
 	if home != "" && strings.HasPrefix(histDir, home) {
@@ -267,7 +269,7 @@ func (a *App) handleCreate(msg createMsg) tea.Cmd {
 			newHistory = append(newHistory, h)
 		}
 	}
-	saveDirHistory(historyPath, newHistory)
+	saveDirHistory(a.dirHistoryPath(), newHistory)
 
 	vars := hooks.Vars{ID: id, Task: msg.task, Dir: msg.dir, Status: string(status)}
 	if msg.pending {

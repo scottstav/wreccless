@@ -29,8 +29,8 @@ type form struct {
 	height      int
 }
 
-func newForm(width, height int, historyPath string, history []string) form {
-	dp := newDirPicker(historyPath, history)
+func newForm(width, height int, history []string) form {
+	dp := newDirPicker(history)
 	dp.Focus()
 
 	taskInput := textinput.New()

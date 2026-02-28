@@ -43,15 +43,14 @@ type dirPickerNextFieldMsg struct{}
 type dirPickerCancelMsg struct{}
 
 type dirPicker struct {
-	input       textinput.Model
-	candidates  []string
-	cursor      int
-	open        bool
-	history     []string
-	historyPath string
+	input      textinput.Model
+	candidates []string
+	cursor     int
+	open       bool
+	history    []string
 }
 
-func newDirPicker(historyPath string, history []string) dirPicker {
+func newDirPicker(history []string) dirPicker {
 	ti := textinput.New()
 	ti.Placeholder = "~/projects/my-app"
 	ti.CharLimit = 256
@@ -60,14 +59,13 @@ func newDirPicker(historyPath string, history []string) dirPicker {
 	ti.SetCursor(len("~/"))
 
 	return dirPicker{
-		input:       ti,
-		cursor:      -1,
-		history:     history,
-		historyPath: historyPath,
+		input:   ti,
+		cursor:  -1,
+		history: history,
 	}
 }
 
-func (d *dirPicker) Value() string {
+func (d dirPicker) Value() string {
 	return d.input.Value()
 }
 
@@ -93,8 +91,8 @@ func (d *dirPicker) refreshCandidates() {
 	}
 
 	collapseTilde := func(p string) string {
-		if home != "" {
-			return strings.Replace(p, home, "~", 1)
+		if home != "" && strings.HasPrefix(p, home) {
+			return "~" + p[len(home):]
 		}
 		return p
 	}

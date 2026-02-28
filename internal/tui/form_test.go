@@ -7,7 +7,7 @@ import (
 )
 
 func TestFormFieldNavigation(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	if f.focusIndex != 0 {
 		t.Errorf("expected focus at 0, got %d", f.focusIndex)
 	}
@@ -24,7 +24,7 @@ func TestFormFieldNavigation(t *testing.T) {
 }
 
 func TestFormCancel(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	_, cmd := f.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if cmd == nil {
 		t.Error("expected Esc to produce a cancel command")
@@ -32,7 +32,7 @@ func TestFormCancel(t *testing.T) {
 }
 
 func TestFormTogglePending(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	f.focusIndex = 3
 	if f.pending {
 		t.Error("expected pending to start false")
@@ -44,7 +44,7 @@ func TestFormTogglePending(t *testing.T) {
 }
 
 func TestFormDirPickerIntegration(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	if f.focusIndex != 0 {
 		t.Errorf("expected focus at 0, got %d", f.focusIndex)
 	}
@@ -54,7 +54,7 @@ func TestFormDirPickerIntegration(t *testing.T) {
 }
 
 func TestFormDirPickerNextFieldMsg(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	f, _ = f.Update(dirPickerNextFieldMsg{})
 	if f.focusIndex != 1 {
 		t.Errorf("expected focus at 1 after dirPickerNextFieldMsg, got %d", f.focusIndex)
@@ -62,7 +62,7 @@ func TestFormDirPickerNextFieldMsg(t *testing.T) {
 }
 
 func TestFormSubmitEmpty(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	f.dirPicker.input.SetValue("")
 	_, cmd := f.Update(tea.KeyMsg{Type: tea.KeyCtrlS})
 	if cmd != nil {
@@ -71,7 +71,7 @@ func TestFormSubmitEmpty(t *testing.T) {
 }
 
 func TestFormWraparound(t *testing.T) {
-	f := newForm(80, 24, "", nil)
+	f := newForm(80, 24, nil)
 	f, _ = f.Update(tea.KeyMsg{Type: tea.KeyTab}) // -> 1
 	f, _ = f.Update(tea.KeyMsg{Type: tea.KeyTab}) // -> 2
 	f, _ = f.Update(tea.KeyMsg{Type: tea.KeyTab}) // -> 3 (checkbox)
