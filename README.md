@@ -55,7 +55,7 @@ ccl clean --all              # removes everything
 ccl ui
 ```
 
-A full-screen terminal interface for managing workers. Launch it and everything is at your fingertips.
+A full-screen terminal interface for managing workers.
 
 ### Dashboard
 
