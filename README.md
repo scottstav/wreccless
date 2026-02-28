@@ -52,4 +52,4 @@ Hooks fire on state transitions (`on_start`, `on_done`, `on_pending`, `on_error`
 
 ## How it works
 
-`ccl new` writes a state file and spawns a detached process that calls `claude -p --output-format stream-json`. Output streams to a log file. When claude exits, state flips to `done` or `error` and hooks fire. That's it.
+`ccl new` writes a state file and spawns a detached process that calls `claude -p --output-format stream-json`. Output streams to a log file. When claude exits, state flips to `done` or `error` and hooks fire.
