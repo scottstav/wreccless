@@ -44,3 +44,43 @@ func TestSaveHistoryCapsAt50(t *testing.T) {
 		t.Errorf("expected 50 dirs after cap, got %d", len(got))
 	}
 }
+
+func TestNewDirPicker(t *testing.T) {
+	dp := newDirPicker("", nil)
+	if dp.Value() != "~/" {
+		t.Errorf("expected initial value '~/', got %q", dp.Value())
+	}
+	if dp.open {
+		t.Error("expected dropdown to start closed")
+	}
+	if dp.cursor != -1 {
+		t.Errorf("expected cursor at -1, got %d", dp.cursor)
+	}
+}
+
+func TestDirPickerCandidatesWithHistory(t *testing.T) {
+	history := []string{"~/projects/foo", "~/projects/bar", "~/documents"}
+	dp := newDirPicker("", history)
+	dp.input.SetValue("~/pro")
+	dp.refreshCandidates()
+
+	found := false
+	for _, c := range dp.candidates {
+		if c == "~/projects/foo" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected history entry ~/projects/foo in candidates, got %v", dp.candidates)
+	}
+}
+
+func TestDirPickerCandidatesMaxFive(t *testing.T) {
+	dp := newDirPicker("", nil)
+	dp.input.SetValue("/") // root has many dirs
+	dp.refreshCandidates()
+	if len(dp.candidates) > 5 {
+		t.Errorf("expected max 5 candidates, got %d", len(dp.candidates))
+	}
+}
