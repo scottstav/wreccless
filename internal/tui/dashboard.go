@@ -276,6 +276,7 @@ func (d dashboard) renderHelp() string {
 			add("[d]", "deny")
 		case state.StatusWorking:
 			add("[x]", "kill")
+			add("[r]", "resume")
 		case state.StatusDone, state.StatusError:
 			add("[r]", "resume")
 			add("[c]", "clean")
@@ -284,7 +285,11 @@ func (d dashboard) renderHelp() string {
 	}
 
 	add("[n]", "new")
-	add("[/]", "filter")
+	if d.filter != "" {
+		add("[/]", "filter:"+d.filter)
+	} else {
+		add("[/]", "filter")
+	}
 	add("[q]", "quit")
 	add("[?]", "help")
 	return "  " + strings.Join(parts, "  ")

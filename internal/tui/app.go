@@ -86,6 +86,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.dashboard.height = msg.Height
 		a.dashboard.refreshWorkers()
 		a.dashboard.refreshLogPreview()
+		if a.view == viewLogView {
+			a.logView.width = msg.Width
+			a.logView.height = msg.Height
+			a.logView.viewport.Width = msg.Width
+			a.logView.viewport.Height = msg.Height - 4
+		}
 		return a, nil
 
 	case tickMsg:
@@ -201,6 +207,10 @@ func (a App) updateLogView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, logViewKeys.Quit) {
 			return a, tea.Quit
 		}
+		if msg.String() == "?" {
+			a.showHelp = !a.showHelp
+			return a, nil
+		}
 	}
 	var cmd tea.Cmd
 	a.logView, cmd = a.logView.Update(msg)
@@ -265,6 +275,12 @@ func (a *App) handleCreate(msg createMsg) tea.Cmd {
 func (a App) handleAction(msg actionMsg) (tea.Model, tea.Cmd) {
 	cfg, _ := config.Load(a.configPath)
 	w := msg.worker
+	// Re-read from disk to avoid stale state
+	if w != nil {
+		if fresh, err := state.Read(a.stateDir, w.ID); err == nil {
+			w = fresh
+		}
+	}
 
 	switch msg.action {
 	case "approve":

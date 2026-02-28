@@ -164,7 +164,17 @@ func (lv *logView) refreshLog() {
 	defer f.Close()
 
 	info, err := f.Stat()
-	if err != nil || info.Size() <= lv.lastOffset {
+	if err != nil {
+		return
+	}
+	// Handle file truncation (log rotation, rewrite)
+	if info.Size() < lv.lastOffset {
+		lv.lastOffset = 0
+		lv.content = ""
+		lv.loadLog()
+		return
+	}
+	if info.Size() == lv.lastOffset {
 		return
 	}
 
@@ -221,7 +231,7 @@ func (lv logView) View() string {
 	// Header
 	task := lv.worker.Task
 	maxTask := lv.width - 30
-	if maxTask > 0 && len(task) > maxTask {
+	if maxTask > 6 && len(task) > maxTask {
 		task = task[:maxTask-3] + "..."
 	}
 	header := fmt.Sprintf(" LOGS: %s │ %s", lv.worker.ID, task)
@@ -261,6 +271,7 @@ func (lv logView) renderHelp() string {
 		add("[d]", "deny")
 	case state.StatusWorking:
 		add("[x]", "kill")
+		add("[r]", "resume")
 	case state.StatusDone, state.StatusError:
 		add("[r]", "resume")
 		add("[c]", "clean")
