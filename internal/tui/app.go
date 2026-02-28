@@ -253,6 +253,22 @@ func (a *App) handleCreate(msg createMsg) tea.Cmd {
 		return flashCmd()
 	}
 
+	// Save directory to history
+	historyPath := filepath.Join(a.stateDir, "dir-history.json")
+	dirHistory := loadDirHistory(historyPath)
+	histDir := msg.dir
+	home, _ := os.UserHomeDir()
+	if home != "" && strings.HasPrefix(histDir, home) {
+		histDir = "~" + histDir[len(home):]
+	}
+	newHistory := []string{histDir}
+	for _, h := range dirHistory {
+		if h != histDir {
+			newHistory = append(newHistory, h)
+		}
+	}
+	saveDirHistory(historyPath, newHistory)
+
 	vars := hooks.Vars{ID: id, Task: msg.task, Dir: msg.dir, Status: string(status)}
 	if msg.pending {
 		hooks.Fire(cfg.Hooks.OnPending, vars)
