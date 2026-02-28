@@ -237,13 +237,12 @@ func (d dashboard) renderTable() string {
 		}
 
 		status := d.renderStatus(w)
-		row := fmt.Sprintf("  %-8s %-10s %-24s %s", w.ID, status, dir, task)
-
+		id := w.ID
 		if i == d.cursor {
-			b.WriteString(selectedStyle.Width(d.width - 2).Render(row))
-		} else {
-			b.WriteString(normalRowStyle.Render(row))
+			id = selectedStyle.Render(id)
 		}
+		row := fmt.Sprintf("  %-8s %-10s %-24s %s", id, status, dir, task)
+		b.WriteString(normalRowStyle.Render(row))
 		b.WriteString("\n")
 	}
 	return b.String()

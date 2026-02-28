@@ -24,8 +24,7 @@ var (
 	selectedStyle = lipgloss.NewStyle().
 			Background(colorPrimary).
 			Foreground(lipgloss.Color("#1a1b26")).
-			Bold(true).
-			Padding(0, 1)
+			Bold(true)
 
 	normalRowStyle = lipgloss.NewStyle().
 			Padding(0, 1)
