@@ -2,6 +2,8 @@
 
 Fire-and-forget Claude Code workers from the command line.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
 `ccl` launches background [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions, tracks their lifecycle, and gets out of the way. Use the built-in TUI to manage everything visually, or stick to the CLI — just a single binary that scripts, pickers, and status bars can talk to.
 
 ## Install
