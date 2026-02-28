@@ -1,4 +1,4 @@
-# wre(**CCL**)ess
+# wre(**ccl**)ess
 
 Fire-and-forget [Claude Code](https://docs.anthropic.com/en/docs/claude-code) workers. Launch background sessions, track them, get out of the way.
 
