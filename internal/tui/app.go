@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -155,7 +156,9 @@ func (a App) updateDashboard(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return a, nil
 			}
 		case key.Matches(msg, dashboardKeys.New):
-			a.form = newForm(a.width, a.height)
+			historyPath := filepath.Join(a.stateDir, "dir-history.json")
+			history := loadDirHistory(historyPath)
+			a.form = newForm(a.width, a.height, historyPath, history)
 			a.view = viewForm
 			return a, a.form.Init()
 
